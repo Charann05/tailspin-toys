@@ -51,6 +51,32 @@ test.describe('Game Listing and Navigation', () => {
     });
   });
 
+  test('should search games by title as the query changes', async ({ page }) => {
+    await page.goto('/');
+    const searchInput = page.getByTestId('game-search');
+    const allCards = page.getByTestId('game-card');
+    const initialCount = await allCards.count();
+    const firstTitle = await allCards.first().getByTestId('game-title').textContent();
+
+    await expect(searchInput).toHaveAccessibleName('Search by title');
+    await searchInput.fill(firstTitle?.slice(0, 4).toUpperCase() ?? '');
+
+    const matchingCards = page.locator('[data-testid="game-card"]:visible');
+    await expect(matchingCards).toHaveCount(1);
+    await expect(matchingCards.first().getByTestId('game-title')).toContainText(firstTitle ?? '');
+    await expect(page.getByTestId('filter-results')).toHaveText('Showing 1 game');
+    expect(await allCards.count()).toBe(initialCount);
+  });
+
+  test('should show an empty state when no title matches', async ({ page }) => {
+    await page.goto('/');
+    await page.getByTestId('game-search').fill('no matching game title');
+
+    await expect(page.locator('[data-testid="game-card"]:visible')).toHaveCount(0);
+    await expect(page.getByTestId('no-filter-results')).toContainText('No games match your search or filters.');
+    await expect(page.getByTestId('filter-results')).toHaveText('Showing 0 games');
+  });
+
   test('should clear active game filters', async ({ page }) => {
     await page.goto('/');
     const initialCount = await page.getByTestId('game-card').count();

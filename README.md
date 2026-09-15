@@ -44,10 +44,11 @@ npm run preview
 
 ## Filter games
 
-The home page includes accessible filters for categories and publishers. Select
-one or more categories to show games matching any selected category, then
-optionally choose a publisher to narrow those results. Use **Clear filters** to
-restore the complete catalog.
+The home page includes an accessible title search and filters for categories and
+publishers. Enter a search term to narrow games by title, select one or more
+categories to show games matching any selected category, then optionally choose
+a publisher to narrow those results. Use **Clear filters** to restore the
+complete catalog.
 
 ## Database
 

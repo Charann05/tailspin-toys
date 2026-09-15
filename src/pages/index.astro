@@ -40,6 +40,17 @@ const publisherOptions = [...new Map(
             data-testid="game-filters"
           >
             <div class="flex flex-col gap-6 lg:flex-row lg:items-end">
+              <label class="flex min-w-56 flex-1 flex-col gap-2 text-sm font-semibold text-slate-200">
+                Search by title
+                <input
+                  type="search"
+                  name="title"
+                  placeholder="Search games..."
+                  class="rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 font-normal text-slate-200 placeholder:text-slate-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  data-testid="game-search"
+                />
+              </label>
+
               <fieldset class="flex-1">
                 <legend class="mb-3 text-sm font-semibold text-slate-200">Filter by category</legend>
                 <div class="flex flex-wrap gap-3">
@@ -90,7 +101,7 @@ const publisherOptions = [...new Map(
             {games.map((game) => <GameCard game={game} />)}
           </div>
           <p class="hidden rounded-xl border border-slate-700 bg-slate-800/60 p-8 text-center text-slate-300" data-testid="no-filter-results">
-            No games match those filters.
+            No games match your search or filters.
           </p>
         </>
       )}
@@ -99,24 +110,29 @@ const publisherOptions = [...new Map(
 </Layout>
 
 <script>
+  import { matchesGameTitle } from '../lib/search';
+
   const filterForm = document.querySelector<HTMLFormElement>('[data-testid="game-filters"]');
   const gameCards = Array.from(document.querySelectorAll<HTMLElement>('[data-testid="game-card"]'));
   const resultsMessage = document.querySelector<HTMLElement>('[data-testid="filter-results"]');
   const noResultsMessage = document.querySelector<HTMLElement>('[data-testid="no-filter-results"]');
+  const searchInput = filterForm?.querySelector<HTMLInputElement>('input[name="title"]');
 
-  if (filterForm && resultsMessage && noResultsMessage) {
+  if (filterForm && resultsMessage && noResultsMessage && searchInput) {
     const updateResults = (): void => {
       const selectedCategories = new Set(
         Array.from(filterForm.querySelectorAll<HTMLInputElement>('input[name="category"]:checked'))
           .map((input) => input.value),
       );
       const selectedPublisher = filterForm.querySelector<HTMLSelectElement>('select[name="publisher"]')?.value ?? '';
+      const searchQuery = searchInput.value;
       let visibleCount = 0;
 
       for (const card of gameCards) {
         const categoryMatches = selectedCategories.size === 0 || selectedCategories.has(card.dataset.categoryId ?? '');
         const publisherMatches = selectedPublisher === '' || card.dataset.publisherId === selectedPublisher;
-        const isVisible = categoryMatches && publisherMatches;
+        const titleMatches = matchesGameTitle(card.dataset.gameTitle ?? '', searchQuery);
+        const isVisible = categoryMatches && publisherMatches && titleMatches;
         card.hidden = !isVisible;
         card.setAttribute('aria-hidden', String(!isVisible));
         if (isVisible) visibleCount += 1;
@@ -127,6 +143,11 @@ const publisherOptions = [...new Map(
     };
 
     filterForm.addEventListener('change', updateResults);
+    searchInput.addEventListener('input', updateResults);
+    filterForm.addEventListener('submit', (event) => {
+      event.preventDefault();
+      updateResults();
+    });
     filterForm.addEventListener('reset', () => requestAnimationFrame(updateResults));
   }
 </script>
